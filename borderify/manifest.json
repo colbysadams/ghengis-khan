@@ -1,0 +1,23 @@
+{
+
+  "manifest_version": 2,
+  "name": "Ghengis Khan",
+  "version": "1.0",
+
+  "description": "Adds a red border to all webpages matching mozilla.org.",
+
+  "icons": {
+    "48": "icons/border-48.png"
+  },
+  "permissions": [
+    "webRequest",
+    "webRequestBlocking",
+    "cookies",
+    "tabs",
+    "downloads",
+    "https://www.khanacademy.org/*"
+  ],
+  "background": {
+    "scripts": ["background.js"]
+  }
+}

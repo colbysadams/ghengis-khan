@@ -4,10 +4,11 @@
   "name": "Ghengis Khan",
   "version": "1.0",
 
-  "description": "Adds a red border to all webpages matching mozilla.org.",
+  "description": "Downloads student data from khan academy in CSV format.",
 
   "icons": {
-    "48": "icons/border-48.png"
+    "64": "icons/border-64.png",
+    "32": "icons/border-32.png"
   },
   "permissions": [
     "webRequest",
@@ -17,6 +18,11 @@
     "downloads",
     "https://www.khanacademy.org/*"
   ],
+  "browser_action": {
+    "default_icon": "icons/border-64.png",
+    "default_title": "Ghengis Khan",
+    "default_popup": "popup.html"
+  },
   "background": {
     "scripts": ["background.js"]
   }

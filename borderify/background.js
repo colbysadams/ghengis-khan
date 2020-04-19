@@ -51,7 +51,7 @@ function getStudentAssignmentSummary({
   });
   const urlQueryPath = "StandaloneUserAssignments";
 
-  return getStudentSummary({
+  return fetchInternalApiHelper({
     student,
     cookie,
     sessionParam,
@@ -89,7 +89,7 @@ function getStudentActivitySummary({
   });
 
   const urlQueryPath = "ActivitySessionsReportQuery";
-  return getStudentSummary({
+  return fetchInternalApiHelper({
     student,
     cookie,
     sessionParam,
@@ -116,15 +116,14 @@ function getStudentActivitySummary({
  * @param urlQueryPath
  * @returns {Promise<any>}
  */
-function getStudentSummary({
+function fetchInternalApiHelper({
   student,
+  referrer,
   cookie,
   sessionParam,
-  startDate,
-  endDate,
   body,
   classId,
-  urlQueryPath = "ActivitySessionsReportQuery",
+  urlQueryPath,
 }) {
   let tsNow = Date.now();
   return fetch(
@@ -134,7 +133,9 @@ function getStudentSummary({
       mode: "same-origin", // no-cors, *cors, same-origin
       cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
       credentials: "same-origin", // include, *same-origin, omit
-      referrer: `https://www.khanacademy.org/coach/class/${classId}/students/student/${student.kaid}`,
+      referrer:
+        referrer ||
+        `https://www.khanacademy.org/coach/class/${classId}/students/student/${student.kaid}`,
       headers: {
         "Content-Type": "application/json",
         "X-KA-FKey": cookie.value,
@@ -148,110 +149,134 @@ function getStudentSummary({
   ).then((result) => result.json());
 }
 
-function resultsToRowsForDownload(results) {
-  const jsRows = results.reduce(
-    (
-      { activities, assignments },
-      { student, activitySessions, assignmentSummaries }
-    ) => {
-      return {
-        activities: activities.concat(
-          activitySessions.map((session) => ({
-            student: student.coachNickname,
-            studentEmail: student.email,
-            activityType: session.activityKind.translatedTitle,
-            activityTitle: session.content.translatedTitle,
-            course: session.course ? session.course.translatedTitle : "",
-            durationMinutes: session.durationMinutes,
-            timestamp: session.eventTimestamp,
-            problemCount:
-              session.problemCount !== undefined &&
-              session.problemCount !== null
-                ? session.problemCount
-                : "",
-            correctCount:
-              session.correctCount !== undefined &&
-              session.correctCount !== null
-                ? session.correctCount
-                : "",
-          }))
-        ),
-        assignments: assignments.concat(
-          assignmentSummaries.map((assignment) => ({
-            student: student.coachNickname,
-            studentEmail: student.email,
-            activityType: assignment.contents[0].kind,
-            activityTitle: assignment.contents[0].translatedTitle,
-            assignedDate: assignment.assignedDate,
-            dueDate: assignment.dueDate,
-            status: assignment.itemCompletionStates[0].state,
-            completedOn: assignment.itemCompletionStates[0].completedOn,
-            bestScore: assignment.itemCompletionStates[0].bestScore
-              ? assignment.itemCompletionStates[0].bestScore.numCorrect
-              : null,
-            pointsPossible: assignment.itemCompletionStates[0].bestScore
-              ? assignment.itemCompletionStates[0].bestScore.numAttempted
-              : null,
-            excerciseAttempts:
-              assignment.itemCompletionStates[0].excerciseAttempts ? assignment.itemCompletionStates[0].excerciseAttempts.length : null,
-          }))
-        ),
-      };
-    },
-    {
-      activities: [
-        {
-          activities: "activities",
-          student: "student",
-          studentEmail: "studentEmail",
-          activityType: "activityType",
-          activityTitle: "activityTitle",
-          course: "course",
-          durationMinutes: "durationMinutes",
-          timestamp: "timestamp",
-          problemCount: "problemCount",
-          correctCount: "correctCount",
-        },
-      ],
-      assignments: [
-        {
-          student: "student",
-          studentEmail: "studentEmail",
-          activityType: "activityType",
-          activityTitle: "activityTitle",
-          assignedDate: "assignedDate",
-          dueDate: "dueDate",
-          status: "status",
-          completedOn: "completedOn",
-          bestScore: "bestScore",
-          pointsPossible: "pointsPossible",
-          excerciseAttempts: "excerciseAttempts",
-        },
-      ],
-    }
-  );
-  return {
-    activities: jsRows.activities
-      .map(
-        (jsRow, idx) =>
-          `${jsRow.student},${jsRow.studentEmail},${jsRow.activityType},${jsRow.activityTitle},${jsRow.course},${jsRow.durationMinutes},${jsRow.timestamp},${jsRow.problemCount},${jsRow.correctCount},`
-      )
-      .join("\r\n"),
-    assignments: jsRows.assignments
-      .map(
-        (jsRow, idx) =>
-          `${jsRow.student},${jsRow.studentEmail},${jsRow.activityType},${jsRow.activityTitle},${jsRow.assignedDate},${jsRow.dueDate},${jsRow.status},${jsRow.completedOn},${jsRow.bestScore},${jsRow.pointsPossible},${jsRow.excerciseAttempts},`
-      )
-      .join("\r\n"),
-  };
+function normalizeActivitySessions(student, activitySessions) {
+  return activitySessions.map((session) => ({
+    student: student.coachNickname,
+    studentEmail: student.email,
+    activityType: session.activityKind.translatedTitle,
+    activityTitle: session.content.translatedTitle,
+    course: session.course ? session.course.translatedTitle : "",
+    durationMinutes: session.durationMinutes,
+    timestamp: session.eventTimestamp,
+    problemCount:
+      session.problemCount !== undefined && session.problemCount !== null
+        ? session.problemCount
+        : "",
+    correctCount:
+      session.correctCount !== undefined && session.correctCount !== null
+        ? session.correctCount
+        : "",
+  }));
 }
 
-async function fetchStudentActivityData(details, startDate, endDate) {
+function normalizeAssigmentSummaries(student, assignmentSummaries) {
+
+
+  return assignmentSummaries.map((assignment) => {
+    const itemCompletionState = assignment.itemCompletionStates[0]
+    console.log("assignment", assignment)
+
+    return ({
+      student: student.coachNickname,
+      studentEmail: student.email,
+      activityType: assignment.contents[0].kind,
+      activityTitle: assignment.contents[0].translatedTitle,
+      assignedDate: assignment.assignedDate,
+      dueDate: assignment.dueDate,
+      status: assignment.itemCompletionStates[0].state,
+      completedOn: assignment.itemCompletionStates[0].completedOn,
+      bestScore: assignment.itemCompletionStates[0].bestScore
+                 ? assignment.itemCompletionStates[0].bestScore.numCorrect
+                 : null,
+      pointsPossible: assignment.itemCompletionStates[0].bestScore
+                      ? assignment.itemCompletionStates[0].bestScore.numAttempted
+                      : null,
+      exerciseAttempts:
+        assignment.itemCompletionStates[0].exerciseAttempts &&
+        assignment.itemCompletionStates[0].exerciseAttempts.length > 0
+        ? assignment.itemCompletionStates[0].exerciseAttempts.length
+        : null,
+    })
+  });
+}
+
+function activitiesToCsv(normalizedActivites) {
+  // console.log("normalized activities:", normalizedActivites);
+  const array = [
+    {
+      activities: "activities",
+      student: "student",
+      studentEmail: "studentEmail",
+      activityType: "activityType",
+      activityTitle: "activityTitle",
+      course: "course",
+      durationMinutes: "durationMinutes",
+      timestamp: "timestamp",
+      problemCount: "problemCount",
+      correctCount: "correctCount",
+    },
+  ].concat(normalizedActivites);
+  return array
+    .map(
+      (jsRow) =>
+        `${jsRow.student},${jsRow.studentEmail},${jsRow.activityType},${jsRow.activityTitle},${jsRow.course},${jsRow.durationMinutes},${jsRow.timestamp},${jsRow.problemCount},${jsRow.correctCount}`
+    )
+    .join("\r\n");
+}
+
+function assigmentsToCSV(normalizedAssigments) {
+  // console.log("normalized assignments:", normalizedAssigments);
+  const array = [
+    {
+      student: "student",
+      studentEmail: "studentEmail",
+      activityType: "activityType",
+      activityTitle: "activityTitle",
+      assignedDate: "assignedDate",
+      dueDate: "dueDate",
+      status: "status",
+      completedOn: "completedOn",
+      bestScore: "bestScore",
+      pointsPossible: "pointsPossible",
+      exerciseAttempts: "exerciseAttempts",
+    },
+  ].concat(normalizedAssigments);
+  return array
+    .map(
+      (jsRow) =>
+        `${jsRow.student},${jsRow.studentEmail},${jsRow.activityType},${jsRow.activityTitle},${jsRow.assignedDate},${jsRow.dueDate},${jsRow.status},${jsRow.completedOn},${jsRow.bestScore},${jsRow.pointsPossible},${jsRow.exerciseAttempts}`
+    )
+    .join("\r\n");
+}
+
+async function fetchStudentActivityData(startDate, endDate) {
+  return fetchDataHelper(
+    startDate,
+    endDate,
+    getStudentActivitySummary,
+    normalizeActivitySessions
+  ).then((data2d) => data2d.flat());
+}
+
+async function fetchStudentAssigmentData(startDate, endDate) {
+  return fetchDataHelper(
+    startDate,
+    endDate,
+    getStudentAssignmentSummary,
+    normalizeAssigmentSummaries
+  ).then((data2d) => data2d.flat());
+}
+
+async function fetchDataHelper(
+  startDate,
+  endDate,
+  fetchFunction,
+  normalizeFunction
+) {
   let cookies = await getActive().then(getCookie);
   let cookie = cookies.filter((c) => c.name === "fkey")[0];
-  let sessionParam = details.url.match(getParamRegex)[1];
   let classId = (await getActive())[0].url.match(classIdRegex)[1];
-  console.log("cookies: ", cookie);
+
 
   return Promise.all(
     globalData[
@@ -262,24 +287,15 @@ async function fetchStudentActivityData(details, startDate, endDate) {
         const studentRequest = {
           student,
           cookie,
-          sessionParam,
+          sessionParam: globalData.sessionParam,
           startDate,
           endDate,
           classId,
         };
-        const activitySessions = await getStudentActivitySummary(
-          studentRequest
-        );
-        const assignmentSummaries = await getStudentAssignmentSummary(
-          studentRequest
-        );
+        const activitySessions = await fetchFunction(studentRequest);
         // console.log("activitySessions: ", activitySessions)
         // console.log("assigmentSummaries: ", assignmentSummaries)
-        return {
-          student,
-          activitySessions,
-          assignmentSummaries,
-        };
+        return normalizeFunction(student, activitySessions);
       }
     )
   );
@@ -316,11 +332,12 @@ const downloadStringFunction = (filenameStr, text) => `(function download() {
  * main function that listens for
  * @param details
  */
-function listener(details) {
+function studentListListener(details) {
   console.log("Loading: " + details.url);
   let filter = browser.webRequest.filterResponseData(details.requestId);
   let decoder = new TextDecoder("utf-8");
   let encoder = new TextEncoder();
+  globalData.sessionParam = details.url.match(getParamRegex)[1];
   let path = details.url.match(pathRegex)[1];
   globalData[path] = {};
   globalData[path]["request"] = decoder.decode(details.requestBody.raw.bytes);
@@ -341,21 +358,12 @@ function listener(details) {
     // Just change any instance of WebExtension Example in the HTTP response
     // to WebExtension WebExtension Example.
     // str = str.replace(/WebExtension Example/g, 'WebExtension $&')
-    console.log("str = " + str.substr(0, 80) + "...");
+    // console.log("str = " + str.substr(0, 80) + "...");
     globalData[path]["response"] = JSON.parse(str);
     filter.write(encoder.encode(str));
     filter.close();
     if (path === studentsListParam) {
-      fetchStudentActivityData(details, "2020-01-01", "2020-04-20")
-        .then((obj) => resultsToRowsForDownload(obj))
-        .then(({ activities, assignments }) => {
-          // console.log("assignments: ", assignments)
-          browser.tabs.executeScript({
-            code: `
-            ${downloadStringFunction("assignments.csv", assignments)}`
-            ,
-          });
-        });
+      globalData.isReady = true;
     }
   };
 }
@@ -363,7 +371,7 @@ function listener(details) {
 // console.log("loading add on...")
 
 browser.webRequest.onBeforeRequest.addListener(
-  listener,
+  studentListListener,
   {
     urls: [
       `https://www.khanacademy.org/api/internal/graphql/${studentsListParam}*`,
@@ -372,3 +380,46 @@ browser.webRequest.onBeforeRequest.addListener(
   },
   ["blocking", "requestBody"]
 );
+
+function downloadClickListener(data, sender, sendResponse) {
+  // console.log("click listener: ", data.command);
+  switch (data.command) {
+    case "ready-query":
+      sendResponse({ isReady: globalData.isReady });
+      break;
+    case "activities":
+      fetchStudentActivityData(data.startDate, data.endDate)
+        .then((activities) => activitiesToCsv(activities))
+        .then((activities) =>
+          browser.tabs.executeScript({
+            code: `
+            ${downloadStringFunction(
+              `activities_${data.startDate}_${data.endDate}.csv`,
+              activities
+            )}`,
+          })
+        )
+        .catch((e) => {
+          console.error(e);
+        });
+      break;
+    case "assignments":
+      fetchStudentAssigmentData(data.startDate, data.endDate)
+        .then((assigments) => assigmentsToCSV(assigments))
+        .then((assignments) =>
+          browser.tabs.executeScript({
+            code: `
+            ${downloadStringFunction(
+              `assignments_${data.startDate}_${data.endDate}.csv`,
+              assignments
+            )}`,
+          })
+        )
+        .catch((e) => {
+          console.error(e);
+        });
+      break;
+  }
+}
+
+browser.runtime.onMessage.addListener(downloadClickListener);

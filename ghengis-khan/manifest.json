@@ -4,7 +4,7 @@
   "name": "Ghengis Khan",
   "version": "1.0",
 
-  "description": "Downloads student data from khan academy in CSV format.",
+  "description": "Allows a khan academy teacher to download their student data from khan academy in CSV format.",
 
   "icons": {
     "64": "icons/border-64.png",

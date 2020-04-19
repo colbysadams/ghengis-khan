@@ -2,9 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="860861d7-b93d-4587-b914-a2d681532035" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/borderify/popup.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/borderify/popup.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/borderify/popup.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/borderify/background.js" beforeDir="false" afterPath="$PROJECT_DIR$/borderify/background.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/borderify/manifest.json" beforeDir="false" afterPath="$PROJECT_DIR$/borderify/manifest.json" afterDir="false" />
@@ -41,6 +38,11 @@
     <property name="nodejs_package_manager_path" value="yarn" />
     <property name="prettierjs.PrettierConfiguration.Package" value="$PROJECT_DIR$/node_modules/prettier" />
     <property name="settings.editor.selected.configurable" value="preferences.general" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/borderify/icons" />
+    </key>
   </component>
   <component name="RunManager" selected="npm.npm start">
     <configuration name="Debug Application" type="JavascriptDebugType" uri="http://localhost:3000">
@@ -81,7 +83,7 @@
       <updated>1586534981878</updated>
       <workItem from="1586534985609" duration="16994000" />
       <workItem from="1586808802661" duration="750000" />
-      <workItem from="1587315275451" duration="18015000" />
+      <workItem from="1587315275451" duration="18484000" />
     </task>
     <servers />
   </component>
@@ -89,6 +91,10 @@
     <option name="version" value="1" />
   </component>
   <component name="WindowStateProjectService">
+    <state x="146" y="368" width="667" height="486" key="find.popup" timestamp="1587339489175">
+      <screen x="0" y="23" width="1920" height="1177" />
+    </state>
+    <state x="146" y="368" width="667" height="486" key="find.popup/0.23.1920.1177@0.23.1920.1177" timestamp="1587339489175" />
     <state x="385" y="338" width="670" height="562" key="search.everywhere.popup" timestamp="1587339264973">
       <screen x="0" y="23" width="1920" height="1177" />
     </state>

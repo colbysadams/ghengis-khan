@@ -174,7 +174,7 @@ function normalizeAssigmentSummaries(student, assignmentSummaries) {
 
   return assignmentSummaries.map((assignment) => {
     const itemCompletionState = assignment.itemCompletionStates[0]
-    console.log("assignment", assignment)
+    //console.log("assignment", assignment)
 
     return ({
       student: student.coachNickname,
